@@ -1,0 +1,80 @@
+---
+title: "STL Lead Inequity"
+author: "Wylie Hampson"
+date: "8/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(here)
+library(skimr)
+```
+
+## Read in the stl_blood_lead.csv as a data frame
+
+read_delim() is for csv files that have different delimiters
+
+```{r}
+stl_lead <- read_delim(here::here("data", "stl_blood_lead.csv"), delim = ";")
+
+stl_lead <- stl_lead %>% clean_names()
+
+```
+
+Create new data frame that copies stl_lead, but with one extra column called prop_white
+
+```{r}
+stl_lead_prop <- stl_lead %>% 
+  dplyr::mutate(prop_white = (white / total_pop) * 100) %>% 
+  dplyr::mutate(pct_elevated = str_replace(pct_elevated, pattern = ",", replace = ".")) %>% 
+  dplyr::mutate(pct_elevated = as.numeric(pct_elevated))
+
+```
+
+## Create a scatterplot of the percentage of children in each census tract with elevated blood levels versus the percent of each census tract tract identifying as white.
+
+```{r, fig.width = 5, fig.height = 5}
+stl_lead_plot <- ggplot(data = stl_lead_prop, aes(x = prop_white, y = pct_elevated)) +
+  geom_point(alpha = 0.5,
+             color = "purple") +
+  theme_light() +
+  labs(x = "Proportion White",
+       y = "Percent of Elevated Lead Levels",
+       title = "Percent of Elevated Lead Blood Levels vs. Percent White")
+
+stl_lead_plot
+```
+
+## Save the plot to the figs file
+
+```{r}
+ggsave(here::here("figs", "stl_lead_plot.jpg"), plot = stl_lead_plot, width = 6, height = 5)
+```
+
+The above graph shows that as the proportion of communities becomes increasingly white, the percentage of elevated lead levels in children becomes lower.
+
+## Make a histogram
+
+```{r, fig.width = 7, fig.height = 7}
+stl_lead_histogram <- ggplot(data = stl_lead_prop, aes(x = pct_elevated)) +
+  geom_histogram(aes(fill = "yellow"),
+                 alpha = 0.5,
+                 color = "brown") +
+  theme_dark() +
+  labs(x = "Percentage of Elevated Blood Lead Level",
+       y = "Count",
+       title = "Kids with Elevated Blood Lead Levels by Tract")
+
+stl_lead_histogram
+```
+
+## Save the histogram to the figs folder
+
+```{r}
+ggsave(here::here("figs", "stl_lead_histrogram.jpg"), plot = stl_lead_histogram,
+       width = 6, height = 5)
+```
+
